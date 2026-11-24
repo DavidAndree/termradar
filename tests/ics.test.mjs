@@ -1,0 +1,12 @@
+import * as chrono from 'chrono-node';
+import { createParser } from '../js/parser.js';
+import { buildIcs } from '../js/calendar.js';
+import { SAMPLES } from '../js/samples.js';
+const p = createParser(chrono);
+const courses = SAMPLES.map((s, k) => { const r = p.parse(s.text); return { id: 'c' + k, code: r.course.code, items: r.items.map((i, j) => ({ ...i, id: 'i' + j })) }; });
+const ics = buildIcs(courses);
+const events = ics.match(/BEGIN:VEVENT/g).length, alarms = ics.match(/BEGIN:VALARM/g).length;
+const long = ics.split('\r\n').filter(l => l.length > 75).length;
+console.log({ events, alarms, linesOver75: long, crlf: ics.includes('\r\n') });
+console.log(ics.split('\r\n').slice(5, 20).join('\n'));
+if (long || !events) process.exit(1);

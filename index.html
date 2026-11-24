@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TermRadar</title>
+  <meta name="description" content="Drop in your syllabi. TermRadar finds every deadline, spots your crunch weeks before they hit, and builds a prep plan — with AI that runs entirely in your browser." />
+  <meta property="og:title" content="TermRadar — see your crunch weeks coming" />
+  <meta property="og:description" content="Private, on-device AI that turns syllabi into a semester heatmap, prep plan and calendar." />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script>
+    try { const t = localStorage.getItem('termradar:theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="TermRadar home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2" opacity=".35"/><circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="2" opacity=".6"/><path d="M16 16 L28 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="22" cy="21" r="2.4" fill="var(--hot)"/></svg>
+      <span>TermRadar</span>
+    </a>
+    <nav class="top-actions">
+      <a class="link" href="#how">How it works</a>
+      <button class="btn ghost" id="btn-add" hidden>+ Add syllabus</button>
+      <button class="btn" id="btn-export" hidden>Export to calendar</button>
+      <button class="icon-btn" id="btn-theme" aria-label="Toggle light or dark theme" title="Toggle theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- INTAKE -->
+    <section id="intake" class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">AI semester planner · runs 100% in your browser</p>
+        <h1>See your crunch weeks <em>before</em> they hit.</h1>
+        <p class="lede">Drop in your syllabi. TermRadar pulls out every exam, project and paper, overlays all your courses on one radar, and tells you exactly when to start each one.</p>
+        <ul class="proof">
+          <li><span>🔒</span> No sign-up, no API key, nothing uploaded</li>
+          <li><span>🧠</span> On-device AI with hallucination guard</li>
+          <li><span>📅</span> One-click export to Google / Apple / Outlook calendar</li>
+        </ul>
+      </div>
+
+      <div class="intake-card card">
+        <div class="radar" aria-hidden="true">
+          <div class="sweep"></div>
+          <i style="--x:68%;--y:30%;--d:.2s"></i><i style="--x:30%;--y:62%;--d:1.1s"></i><i style="--x:58%;--y:72%;--d:2s" class="hot"></i><i style="--x:24%;--y:34%;--d:2.7s"></i>
+        </div>
+
+        <label class="drop" id="drop" tabindex="0">
+          <input type="file" id="file" accept=".pdf,.txt,.md,text/plain,application/pdf" multiple hidden />
+          <strong>Drop syllabus PDFs here</strong>
+          <span>or click to choose · PDF, TXT · several at once</span>
+        </label>
+
+        <div class="or"><span>or paste text</span></div>
+        <textarea id="paste" rows="5" placeholder="Paste a syllabus (schedule, grading breakdown, due dates)…" aria-label="Syllabus text"></textarea>
+
+        <div class="ai-row">
+          <label class="switch">
+            <input type="checkbox" id="ai-toggle" />
+            <span class="slider" aria-hidden="true"></span>
+            <span class="switch-label">On-device AI <small id="ai-hint">(≈1 GB one-time download, needs WebGPU)</small></span>
+          </label>
+        </div>
+        <div class="progress" id="ai-progress" hidden><div class="bar"></div><span class="ptext">Loading model…</span></div>
+
+        <div class="intake-actions">
+          <button class="btn primary" id="btn-analyze">Scan syllabus</button>
+          <button class="btn ghost" id="btn-sample">Try a sample semester →</button>
+        </div>
+        <p class="fine">Your files never leave this device. Results are saved only in this browser.</p>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dash" hidden>
+      <div class="stats" id="stats"></div>
+
+      <div class="card radar-card">
+        <div class="card-head">
+          <div>
+            <h2>Semester radar</h2>
+            <p class="sub">Each cell is a week. Darker = more graded work. Click any week.</p>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span>light</span><b class="l1"></b><b class="l2"></b><b class="l3"></b><b class="l4"></b><span>crunch</span>
+            <b class="lbreak"></b><span>break</span>
+          </div>
+        </div>
+        <div class="heat-wrap"><div class="heat" id="heat" role="grid" aria-label="Weekly workload by course"></div></div>
+      </div>
+
+      <div class="split">
+        <div class="card" id="week-card" aria-live="polite"></div>
+        <div class="card" id="next-card"></div>
+      </div>
+
+      <div class="courses" id="courses"></div>
+
+      <div class="dash-foot">
+        <button class="btn ghost danger" id="btn-reset">Clear everything</button>
+      </div>
+    </section>
+
+    <!-- HOW -->
+    <section id="how" class="how">
+      <h2>How TermRadar works</h2>
+      <div class="steps">
+        <div class="step card"><b>1</b><h3>Read</h3><p>PDFs are converted to text right in your browser with PDF.js. Tables, week-by-week outlines and paragraph-style syllabi are all supported.</p></div>
+        <div class="step card"><b>2</b><h3>Extract</h3><p>A rule engine finds every real date and grading weight. Optionally, a 1.5B-parameter language model (Qwen 2.5 via WebLLM) runs <em>on your GPU</em> to understand messy wording.</p></div>
+        <div class="step card"><b>3</b><h3>Verify</h3><p><strong>AI proposes, rules verify.</strong> An AI-suggested deadline is kept only if its date actually appears in your syllabus, so hallucinated dates never reach your calendar.</p></div>
+        <div class="step card"><b>4</b><h3>Plan</h3><p>Deadlines are scored by type and grade weight, stacked across courses into a heatmap, and turned into "start by" dates, a study-coach plan and a calendar file.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>TermRadar · built for <a href="https://build-your-first-ai-app.devpost.com/" target="_blank" rel="noopener">Build Your First AI App 2026</a></span>
+    <span>Open source · MIT</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
