@@ -14,6 +14,12 @@ TermRadar turns your course syllabi into one semester-wide radar. It finds every
 
 Every course hands out a syllabus, and each one is formatted differently: tables, week-by-week outlines, paragraphs. Students read them one at a time, so nobody sees the full picture until it's too late: the week when a CS midterm, a physics exam and an English essay all land within three days.
 
+## Who it's for (the market)
+
+- **About 19 million college students in the US alone** (NCES), and tens of millions more worldwide, each juggling 4–6 syllabi a term.
+- **Existing tools stop short.** Student planners (myHomework, MyStudyLife, Notion templates) make you type every deadline in by hand, and LMS calendars show *due dates* but not *how heavy a week is* or *when to start*. None of them read syllabi from multiple courses and turn them into a cross-course workload map.
+- **Natural expansion:** universities' student-success and advising offices, where early warning of overload weeks is a known lever for retention. A paid tier could add LMS sync and shared study-group radars, while the core stays free and private.
+
 ## What TermRadar does
 
 | Feature | What you get |

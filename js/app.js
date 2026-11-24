@@ -120,6 +120,7 @@ async function analyze(sources) {
     const { weeks } = buildWeeks();
     const worst = [...weeks].sort((a, b) => b.score - a.score)[0];
     state.selectedWeek = worst?.key ?? null;
+    animateNext = true;
     save(); render();
     $('#paste').value = '';
     const aiMsg = $('#ai-toggle').checked && aiReady()
@@ -183,32 +184,79 @@ function renderStats(weeks) {
     stat('Collision weeks', clashes, 'major work in 2+ courses at once'),
     stat('Due in next 14 days', soon, soon ? 'start now' : 'you’re clear for now'),
   ].join('');
+  if (animateNext) document.querySelectorAll('#stats .v').forEach((el) => countUp(el, el.dataset.v));
 }
-const stat = (k, v, d, hot) => `<div class="stat card${hot ? ' hot' : ''}"><div class="k">${k}</div><div class="v">${esc(v)}</div><div class="d">${esc(d)}</div></div>`;
+const stat = (k, v, d, hot) => `<div class="stat card${hot ? ' hot' : ''}"><div class="k">${k}</div><div class="v" data-v="${esc(v)}">${esc(v)}</div><div class="d">${esc(d)}</div></div>`;
 
 function renderHeat(weeks, max) {
   const heat = $('#heat');
   heat.style.gridTemplateColumns = `auto repeat(${weeks.length}, minmax(30px, 1fr))`;
   const nowKey = iso(weekStart(TODAY));
   let html = '<div></div>' + weeks.map((w) => `<div class="colhead${w.key === nowKey ? ' now' : ''}">${fmt(w.start, { month: 'numeric', day: 'numeric' })}</div>`).join('');
+  let idx = 0;
   for (const c of state.courses) {
     html += `<div class="rowlabel"><span class="dot" style="background:${c.color}"></span>${esc(c.code)}</div>`;
-    html += weeks.map((w) => {
+    html += weeks.map((w, k) => {
+      idx = k + state.courses.indexOf(c) * 4;
       const s = w.per[c.id] || 0;
       const brk = !s && w.items.some((i) => i.courseId === c.id && i.type === 'break');
       const n = w.items.filter((i) => i.courseId === c.id && i.type !== 'break').length;
-      return `<button class="cell l${level(s, max)}${brk ? ' brk' : ''}${w.key === state.selectedWeek ? ' sel' : ''}" data-week="${w.key}" aria-label="${esc(c.code)}, week of ${fmt(w.start)}: ${n} item${n === 1 ? '' : 's'}${brk ? ', no class' : ''}">${n > 1 ? n : ''}</button>`;
+      return `<button class="cell l${level(s, max)}${brk ? ' brk' : ''}${w.key === state.selectedWeek ? ' sel' : ''}" style="--i:${idx}" data-week="${w.key}" data-cid="${c.id}" aria-label="${esc(c.code)}, week of ${fmt(w.start)}: ${n} item${n === 1 ? '' : 's'}${brk ? ', no class' : ''}">${n > 1 ? n : ''}</button>`;
     }).join('');
   }
-  html += '<div class="rowlabel total">All courses</div>' + weeks.map((w) => {
+  html += '<div class="rowlabel total">All courses</div>' + weeks.map((w, k) => {
     const n = w.items.filter((i) => i.type !== 'break').length;
-    return `<button class="cell total l${level(w.score, max)}${w.isBreak ? ' brk' : ''}${w.key === state.selectedWeek ? ' sel' : ''}" data-week="${w.key}" aria-label="Week of ${fmt(w.start)}: ${n} items${w.clash ? ', collision' : ''}">${n || ''}${w.clash ? '<span class="clash"></span>' : ''}</button>`;
+    return `<button class="cell total l${level(w.score, max)}${w.isBreak ? ' brk' : ''}${w.key === state.selectedWeek ? ' sel' : ''}" style="--i:${k + state.courses.length * 4}" data-week="${w.key}" aria-label="Week of ${fmt(w.start)}: ${n} items${w.clash ? ', collision' : ''}">${n || ''}${w.clash ? '<span class="clash"></span>' : ''}</button>`;
   }).join('');
   heat.innerHTML = html;
+  heat.classList.toggle('static', !animateNext);
+  if (animateNext) { const card = heat.closest('.radar-card'); card.style.animation = 'none'; void card.offsetWidth; card.style.animation = ''; }
+  animateNext = false;
+  lastWeeks = weeks;
+  // Safety net: if animations never run (background tab, throttled renderer), still show everything.
+  clearTimeout(renderHeat.settle);
+  renderHeat.settle = setTimeout(() => { heat.classList.add('static'); $('#week-card').classList.add('static'); }, 1600);
+}
+let animateNext = true;
+let lastWeeks = [];
+
+/* hover preview for heatmap cells */
+function showTip(cell) {
+  const w = lastWeeks.find((x) => x.key === cell.dataset.week); if (!w) return;
+  const cid = cell.dataset.cid;
+  const items = w.items.filter((i) => !cid || i.courseId === cid);
+  const tip = $('#tip');
+  tip.innerHTML = `<h4>Week of ${fmt(w.start)}${w.clash && !cid ? '<small>⚠ collision</small>' : ''}</h4>${items.length
+    ? `<ul>${items.map((i) => `<li><i style="background:${i.color}"></i>${esc(i.title)}<em>${i.type === 'break' ? 'no class' : fmt(fromIso(i.date), { weekday: 'short' })}</em></li>`).join('')}</ul>`
+    : '<span class="sub">Nothing due</span>'}`;
+  tip.hidden = false;
+  const r = cell.getBoundingClientRect(); const tr = tip.getBoundingClientRect();
+  let x = r.left + r.width / 2 - tr.width / 2; x = Math.max(8, Math.min(innerWidth - tr.width - 8, x));
+  let y = r.top - tr.height - 10; if (y < 70) y = r.bottom + 10;
+  tip.style.left = `${x}px`; tip.style.top = `${y}px`;
+}
+
+function countUp(el, to) {
+  const n = parseInt(to, 10);
+  if (isNaN(n) || String(n) !== String(to) || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = to; return; }
+  const t0 = performance.now(); const dur = 700;
+  const step = (t) => { const p = Math.min(1, (t - t0) / dur); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+function buildPreview() {
+  const g = $('#preview-grid'); if (!g) return;
+  const rows = [['CS', '0102102200231002'], ['PHYS', '1010201030112004'], ['ENGL', '0201002020130204'], ['ALL', '1213212041243114']];
+  let html = ''; let i = 0;
+  for (const [name, pat] of rows) {
+    html += `<span>${name}</span>`;
+    for (const ch of pat) html += `<b class="l${ch}" style="--i:${i++}"></b>`;
+  }
+  g.innerHTML = html;
 }
 
 function renderWeek(w, max) {
-  const card = $('#week-card');
+  const card = $('#week-card'); card.classList.remove('static');
   if (!w) { card.innerHTML = '<p class="empty">Pick a week on the radar.</p>'; return; }
   const end = addDays(w.start, 6);
   const graded = w.items.filter((i) => i.type !== 'break');
@@ -237,7 +285,7 @@ function coachButton() {
 function itemRow(i) {
   const d = fromIso(i.date);
   const t = TYPES[i.type] || TYPES.assignment;
-  return `<li class="item${i.done ? ' done' : ''}" style="--c:${i.color}">
+  return `<li class="item${i.done ? ' done' : ''}" style="--c:${i.color};--w:${Math.min(100, (i.weight || 0) * 3)}"${i.weight ? ' data-w' : ''}>
     <div class="when">${fmt(d, { weekday: 'short' })}<b>${d.getDate()}</b></div>
     <div class="what"><strong>${esc(i.title)}</strong><span>${t.icon} ${t.label} · ${esc(i.course)}</span></div>
     <div class="wt">${i.weight ? `${i.weight}%` : ''}</div></li>`;
@@ -351,6 +399,11 @@ function bind() {
     try { localStorage.setItem('termradar:theme', next); } catch {}
   });
 
+  $('#heat').addEventListener('pointerover', (e) => { const c = e.target.closest('.cell'); if (c && e.pointerType !== 'touch') showTip(c); });
+  $('#heat').addEventListener('pointerout', (e) => { if (!e.relatedTarget?.closest?.('.cell')) $('#tip').hidden = true; });
+  $('#heat').addEventListener('focusin', (e) => { const c = e.target.closest('.cell'); if (c) showTip(c); });
+  $('#heat').addEventListener('focusout', () => { $('#tip').hidden = true; });
+  addEventListener('scroll', () => { $('#tip').hidden = true; }, { passive: true });
   $('#heat').addEventListener('click', (e) => {
     const cell = e.target.closest('[data-week]'); if (!cell) return;
     state.selectedWeek = cell.dataset.week; save(); render();
@@ -435,5 +488,6 @@ async function handleFiles(list) {
   } catch (e) { toast(e.message); }
 }
 
+buildPreview();
 bind();
 render();
