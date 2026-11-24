@@ -1,8 +1,8 @@
 import * as chrono from 'https://cdn.jsdelivr.net/npm/chrono-node@2.7.7/+esm';
-import { createParser, assignWeights, TYPES, fromIso, addDays, iso } from './parser.js';
-import { aiSupported, aiReady, loadAI, aiExtract, mergeItems, aiCoach, MODEL_ID } from './ai.js';
-import { buildIcs, download } from './calendar.js';
-import { SAMPLES } from './samples.js';
+import { createParser, assignWeights, TYPES, fromIso, addDays, iso } from './parser.js?v=3';
+import { aiSupported, aiReady, loadAI, aiExtract, mergeItems, aiCoach, MODEL_ID } from './ai.js?v=3';
+import { buildIcs, download } from './calendar.js?v=3';
+import { SAMPLES } from './samples.js?v=3';
 
 const parser = createParser(chrono);
 const $ = (s, el = document) => el.querySelector(s);

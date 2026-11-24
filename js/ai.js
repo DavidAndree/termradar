@@ -1,6 +1,6 @@
 // On-device AI via WebLLM (WebGPU). Nothing leaves the browser: the model weights are
 // downloaded once from Hugging Face, cached, and inference runs on the user's GPU.
-import { classify, TYPES } from './parser.js';
+import { classify, TYPES } from './parser.js?v=3';
 
 const WEBLLM_URL = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.86/+esm';
 export const MODEL_ID = 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC';

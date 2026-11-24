@@ -1,5 +1,5 @@
 // iCalendar (.ics) export with "start preparing" reminders.
-import { TYPES, fromIso, addDays } from './parser.js';
+import { TYPES, fromIso, addDays } from './parser.js?v=3';
 
 const pad = (n) => String(n).padStart(2, '0');
 const ymd = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
