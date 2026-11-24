@@ -6,7 +6,7 @@ TermRadar turns your course syllabi into one semester-wide radar. It finds every
 
 > Built for **Build Your First AI App 2026** (Devpost).
 
-**Live demo:** _add your GitHub Pages link here_ · **Demo video:** _add link_
+**Live demo:** https://davidandree.github.io/termradar/ · **Demo video:** _add YouTube link_
 
 ---
 
@@ -66,7 +66,7 @@ syllabus.pdf ──► PDF.js (in browser) ──► text
 No build step and no API keys.
 
 ```bash
-git clone <this repo>
+git clone https://github.com/DavidAndree/termradar.git
 cd termradar
 python3 -m http.server 5173
 # open http://localhost:5173

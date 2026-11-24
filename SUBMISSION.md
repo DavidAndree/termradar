@@ -10,7 +10,7 @@ Copy each section into the matching Devpost field.
 
 **Built with (tags):** javascript, html5, css3, webllm, webgpu, qwen, chrono-node, pdf.js, github-pages
 
-**Try it out links:** <GitHub Pages URL> · <GitHub repo URL>
+**Try it out links:** https://davidandree.github.io/termradar/ · https://github.com/DavidAndree/termradar
 
 ---
 
